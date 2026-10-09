@@ -1,6 +1,22 @@
+# LAB 2 — Service with no endpoints
+#   kubectl apply -f troubleshooting/broken-service.yaml
+#   kubectl get endpointslices -n helpdesk -l kubernetes.io/service-name=helpdesk-broken-service   # no endpoints
+#   kubectl get pods -n helpdesk --show-labels                    # compare with the selector below
+#   kubectl run curl --rm -it --image=curlimages/curl -n helpdesk --restart=Never -- \
+#     curl -m 3 http://helpdesk-broken-service:8000/health        # times out / connection refused
+# Two bugs: the selector matches no pod label, and targetPort is wrong (the API listens on 8000).
+# Fix:
+#   kubectl patch svc helpdesk-broken-service -n helpdesk --type=merge -p \
+#     '{"spec":{"selector":{"app.kubernetes.io/component":"backend","app":null},"ports":[{"port":8000,"targetPort":8000}]}}'
+# Clean up: kubectl delete -f troubleshooting/broken-service.yaml
 apiVersion: v1
 kind: Service
-metadata: {name: broken-service, namespace: taskboard}
+metadata:
+  name: helpdesk-broken-service
+  namespace: helpdesk
 spec:
-  selector: {app: label-that-does-not-exist}
-  ports: [{port: 8080, targetPort: 8080}]
+  selector:
+    app: helpdesk-api          # wrong: the chart labels pods app.kubernetes.io/component=backend
+  ports:
+    - port: 8000
+      targetPort: 8080         # wrong: uvicorn listens on 8000

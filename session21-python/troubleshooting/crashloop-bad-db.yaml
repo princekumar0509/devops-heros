@@ -1,0 +1,30 @@
+# LAB 3 — CrashLoopBackOff / not Ready because of bad configuration
+#   kubectl apply -f troubleshooting/crashloop-bad-db.yaml
+#   kubectl get pods -n helpdesk -l app=helpdesk-bad-db -w        # Running → Error → CrashLoopBackOff
+#   kubectl logs -n helpdesk -l app=helpdesk-bad-db --previous     # Alembic cannot connect: wrong host
+# Lesson: the image is fine; the environment is wrong. Logs > describe for app-level failures.
+# Fix: read DATABASE_URL from the chart's Secret, exactly like the real backend Deployment does:
+#   kubectl patch deployment helpdesk-bad-db -n helpdesk --type=json -p \
+#     '[{"op":"replace","path":"/spec/template/spec/containers/0/env/0","value":{"name":"DATABASE_URL","valueFrom":{"secretKeyRef":{"name":"helpdesk-postgres","key":"database-url"}}}}]'
+# Clean up: kubectl delete -f troubleshooting/crashloop-bad-db.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: helpdesk-bad-db
+  namespace: helpdesk
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: helpdesk-bad-db}
+  template:
+    metadata:
+      labels: {app: helpdesk-bad-db}
+    spec:
+      securityContext: {runAsNonRoot: true, runAsUser: 10001, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: api
+          image: ghcr.io/YOUR_GITHUB_USER/helpdesk-backend:latest   # use your real image (any SHA tag from GHCR)
+          securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}
+          env:
+            - name: DATABASE_URL
+              value: postgresql+psycopg://helpdesk:wrong@postgres-does-not-exist:5432/helpdesk

@@ -1,10 +1,27 @@
+# LAB 1 — ImagePullBackOff
+#   kubectl apply -f troubleshooting/broken-image.yaml
+#   kubectl get pods -n helpdesk -l app=helpdesk-broken-image          # ErrImagePull → ImagePullBackOff
+#   kubectl describe pod -n helpdesk -l app=helpdesk-broken-image      # Events: "...not found"
+#   kubectl get events -n helpdesk --sort-by=.lastTimestamp | tail
+# Root cause: the tag does not exist in the registry (typo / never pushed / private registry without pull secret).
+# Fix: point the Deployment at a tag that exists:
+#   kubectl set image deployment/helpdesk-broken-image web=nginxinc/nginx-unprivileged:1.31-alpine -n helpdesk
+# Clean up: kubectl delete -f troubleshooting/broken-image.yaml
 apiVersion: apps/v1
 kind: Deployment
-metadata: {name: taskboard-broken-image, namespace: taskboard}
+metadata:
+  name: helpdesk-broken-image
+  namespace: helpdesk
 spec:
   replicas: 1
-  selector: {matchLabels: {app: broken-image}}
+  selector:
+    matchLabels: {app: helpdesk-broken-image}
   template:
-    metadata: {labels: {app: broken-image}}
+    metadata:
+      labels: {app: helpdesk-broken-image}
     spec:
-      containers: [{name: backend, image: ghcr.io/example/taskboard-backend:does-not-exist}]
+      securityContext: {runAsNonRoot: true, runAsUser: 101, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: web
+          image: nginxinc/nginx-unprivileged:1.31-alpine-does-not-exist
+          securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}

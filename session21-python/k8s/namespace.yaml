@@ -1,4 +1,11 @@
+# Created once before the first Helm install (the CI deploy role is scoped to this namespace only).
+#   kubectl apply -f k8s/namespace.yaml
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: taskboard
+  name: helpdesk
+  labels:
+    app.kubernetes.io/part-of: helpdesk
+    # Warn (don't block) when a pod would violate the "restricted" Pod Security Standard.
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/audit: restricted
