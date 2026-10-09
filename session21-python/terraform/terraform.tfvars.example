@@ -1,0 +1,14 @@
+# Copy to terraform.tfvars and adjust. terraform.tfvars is git-ignored.
+# Never put AWS access keys here — use `aws configure` / AWS SSO instead.
+
+aws_region          = "ap-south-1"
+project             = "helpdesk"
+environment         = "dev"
+cluster_version     = "1.34"
+node_instance_types = ["t3.medium"]
+node_desired_size   = 2
+
+# Enables keyless GitHub Actions deploys (OIDC). Set to "" to skip.
+github_repository = "princekumar0509/devops-heros"
+# Set to false if `aws iam list-open-id-connect-providers` already shows token.actions.githubusercontent.com
+create_github_oidc_provider = true
