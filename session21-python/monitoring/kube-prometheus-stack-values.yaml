@@ -1,0 +1,55 @@
+# Prometheus + Grafana + Alertmanager via the prometheus-community/kube-prometheus-stack chart.
+#   helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+#   helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+#     -n monitoring --create-namespace -f monitoring/kube-prometheus-stack-values.yaml
+
+prometheus:
+  prometheusSpec:
+    # Scrape ServiceMonitors from every namespace, not only ones labelled for this release.
+    serviceMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorNamespaceSelector: {}
+    podMonitorSelectorNilUsesHelmValues: false
+    retention: 3d
+    resources:
+      requests: {cpu: 200m, memory: 512Mi}
+
+grafana:
+  enabled: true
+  # Change after first login, or pass --set grafana.adminPassword=... (never commit a real one).
+  adminPassword: helpdesk-admin
+  defaultDashboardsTimezone: browser
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard   # the HelpDesk chart ships its dashboard as a ConfigMap with this label
+      searchNamespace: ALL
+
+alertmanager:
+  enabled: true
+
+# EKS manages these control-plane components; Prometheus cannot scrape them.
+kubeControllerManager: {enabled: false}
+kubeScheduler: {enabled: false}
+kubeEtcd: {enabled: false}
+kubeProxy: {enabled: false}
+
+# Example alert the instructor can trigger with ./scripts/load-test.sh (it sends deliberate 404s, not 5xx).
+additionalPrometheusRulesMap:
+  helpdesk:
+    groups:
+      - name: helpdesk.rules
+        rules:
+          - alert: HelpDeskHighErrorRate
+            expr: |
+              sum(rate(http_requests_total{job=~".*helpdesk.*backend.*",status="5xx"}[5m]))
+                / clamp_min(sum(rate(http_requests_total{job=~".*helpdesk.*backend.*"}[5m])), 1e-9) > 0.05
+            for: 5m
+            labels: {severity: warning}
+            annotations:
+              summary: More than 5% of HelpDesk API requests are failing with 5xx
+          - alert: HelpDeskBackendDown
+            expr: absent(up{job=~".*helpdesk.*backend.*"} == 1)
+            for: 2m
+            labels: {severity: critical}
+            annotations:
+              summary: No healthy HelpDesk backend pod is being scraped
