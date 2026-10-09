@@ -1,0 +1,13 @@
+# Local cluster (kind / minikube / Docker Desktop) with ingress-nginx.
+#   helm upgrade --install helpdesk ./helm/helpdesk -n helpdesk -f helm/helpdesk/values-dev.yaml
+backend:
+  image: {repository: helpdesk-backend, tag: local, pullPolicy: IfNotPresent}
+  replicaCount: 1
+frontend:
+  image: {repository: helpdesk-frontend, tag: local, pullPolicy: IfNotPresent}
+  replicaCount: 1
+ingress:
+  enabled: true
+  host: helpdesk.local
+hpa:
+  enabled: false

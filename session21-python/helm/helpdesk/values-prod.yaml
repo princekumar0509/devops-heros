@@ -1,0 +1,17 @@
+# AWS EKS (created by ../../terraform). CI sets the image repositories and SHA tags.
+backend:
+  replicaCount: 2
+frontend:
+  replicaCount: 2
+ingress:
+  enabled: true
+  host: ""   # match any host so the app works on the ELB hostname; set a real DNS name if you have one
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+monitoring:
+  serviceMonitor:
+    enabled: true
+  grafanaDashboard:
+    enabled: true

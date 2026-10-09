@@ -1,0 +1,18 @@
+HelpDesk {{ .Chart.AppVersion }} deployed as release "{{ .Release.Name }}" in namespace "{{ .Release.Namespace }}".
+
+  kubectl get pods,svc,ingress,hpa -n {{ .Release.Namespace }}
+{{- if .Values.ingress.enabled }}
+
+Ingress:
+  kubectl get ingress {{ include "helpdesk.fullname" . }} -n {{ .Release.Namespace }}
+{{- if .Values.ingress.host }}
+  Open http://{{ .Values.ingress.host }}  (map it to the ingress address in /etc/hosts for local clusters)
+{{- else }}
+  Open http://<ADDRESS column above>
+{{- end }}
+{{- else }}
+
+Port-forward:
+  kubectl port-forward svc/{{ include "helpdesk.frontendName" . }} 3000:80 -n {{ .Release.Namespace }}
+  open http://localhost:3000
+{{- end }}

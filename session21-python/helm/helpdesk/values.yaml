@@ -1,0 +1,55 @@
+# Default values for the HelpDesk chart.
+# CI overrides backend.image.tag / frontend.image.tag with the Git commit SHA on every deploy.
+
+imagePullSecrets: []   # e.g. [{name: ghcr-pull}] if your GHCR packages are private
+
+backend:
+  image:
+    repository: ghcr.io/YOUR_GITHUB_USER/helpdesk-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 2
+  resources:
+    requests: {cpu: 100m, memory: 192Mi}
+    limits: {cpu: 500m, memory: 384Mi}
+
+frontend:
+  image:
+    repository: ghcr.io/YOUR_GITHUB_USER/helpdesk-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 2
+  resources:
+    requests: {cpu: 50m, memory: 64Mi}
+    limits: {cpu: 200m, memory: 128Mi}
+
+postgres:
+  image: postgres:16-alpine
+  database: helpdesk
+  username: helpdesk
+  # Leave empty to auto-generate a password on first install (kept across upgrades).
+  password: ""
+  storage:
+    size: 5Gi
+    storageClassName: ""   # "" = cluster default (gp2 on EKS)
+
+ingress:
+  enabled: false
+  className: nginx
+  host: helpdesk.local   # set to "" to accept any host (e.g. the raw AWS load balancer hostname)
+  annotations: {}
+
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 60
+
+monitoring:
+  serviceMonitor:
+    enabled: false
+    # Must match the Helm release name of kube-prometheus-stack.
+    releaseLabel: kube-prometheus-stack
+    interval: 15s
+  grafanaDashboard:
+    enabled: false

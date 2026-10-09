@@ -1,0 +1,97 @@
+{{- $name := include "helpdesk.postgresName" . -}}
+{{- $password := include "helpdesk.postgresPassword" . -}}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "helpdesk.labels" . | nindent 4 }}
+type: Opaque
+stringData:
+  username: {{ .Values.postgres.username | quote }}
+  password: {{ $password | quote }}
+  database-url: {{ printf "postgresql+psycopg://%s:%s@%s:5432/%s" .Values.postgres.username $password $name .Values.postgres.database | quote }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "helpdesk.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "helpdesk.selectorLabels" (dict "ctx" . "component" "postgres") | nindent 4 }}
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "helpdesk.labels" . | nindent 4 }}
+    {{- include "helpdesk.selectorLabels" (dict "ctx" . "component" "postgres") | nindent 4 }}
+spec:
+  serviceName: {{ $name }}
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "helpdesk.selectorLabels" (dict "ctx" . "component" "postgres") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "helpdesk.labels" . | nindent 8 }}
+        {{- include "helpdesk.selectorLabels" (dict "ctx" . "component" "postgres") | nindent 8 }}
+      annotations:
+        checksum/secret: {{ $password | sha256sum | trunc 12 }}
+    spec:
+      securityContext:
+        {{- include "helpdesk.podSecurityContext" . | nindent 8 }}
+        runAsUser: 70   # postgres user in the alpine image
+        runAsGroup: 70
+        fsGroup: 70
+      containers:
+        - name: postgres
+          image: {{ .Values.postgres.image }}
+          ports:
+            - name: postgres
+              containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: {{ .Values.postgres.database | quote }}
+            - name: POSTGRES_USER
+              valueFrom: {secretKeyRef: {name: {{ $name }}, key: username}}
+            - name: POSTGRES_PASSWORD
+              valueFrom: {secretKeyRef: {name: {{ $name }}, key: password}}
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata   # subdir: EBS volumes contain lost+found
+          readinessProbe:
+            exec: {command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""]}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            exec: {command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""]}
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources:
+            requests: {cpu: 100m, memory: 256Mi}
+            limits: {cpu: 500m, memory: 512Mi}
+          securityContext:
+            {{- include "helpdesk.containerSecurityContext" . | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        {{- with .Values.postgres.storage.storageClassName }}
+        storageClassName: {{ . }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.postgres.storage.size }}
