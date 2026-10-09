@@ -1,0 +1,190 @@
+# CI/CD for the Session 21 capstone (HelpDesk) in session21-python/.
+# Lives at the repo root because GitHub only runs workflows from /.github/workflows.
+#
+#   test  ──►  build + Trivy scan + push to GHCR  ──►  deploy to EKS with Helm
+#
+# Deploy needs two GitHub repository *variables* (Settings → Secrets and variables → Actions → Variables):
+#   AWS_DEPLOY_ROLE_ARN  — `terraform output github_deploy_role_arn`
+#   EKS_CLUSTER_NAME     — `terraform output cluster_name`
+# No AWS keys are stored anywhere: the job gets short-lived credentials through GitHub OIDC.
+name: Session 21 HelpDesk CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths: ["session21-python/**", ".github/workflows/session21-helpdesk.yml"]
+  pull_request:
+    branches: [main]
+    paths: ["session21-python/**", ".github/workflows/session21-helpdesk.yml"]
+  workflow_dispatch:
+
+concurrency:
+  group: helpdesk-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  APP_DIR: session21-python
+  AWS_REGION: ap-south-1
+  NAMESPACE: helpdesk
+
+jobs:
+  test:
+    name: Test (pytest + frontend build)
+    runs-on: ubuntu-latest
+    permissions: {contents: read}
+    defaults:
+      run:
+        working-directory: session21-python
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: session21-python/backend/requirements*.txt
+      - name: Install backend dependencies
+        working-directory: session21-python/backend
+        run: pip install -r requirements-dev.txt
+      - name: Lint backend (ruff)
+        working-directory: session21-python/backend
+        run: ruff check . && ruff format --check .
+      - name: Run backend tests (pytest)
+        working-directory: session21-python/backend
+        run: pytest -v
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: session21-python/frontend/package-lock.json
+      - name: Test and build frontend
+        working-directory: session21-python/frontend
+        run: npm ci && npm test && npm run build
+
+      - name: Lint Helm chart
+        run: helm lint helm/helpdesk -f helm/helpdesk/values-prod.yaml
+
+  build-scan-push:
+    name: Build, scan (Trivy) and push images
+    needs: test
+    runs-on: ubuntu-latest
+    permissions: {contents: read, packages: write}
+    outputs:
+      backend_image: ${{ steps.names.outputs.backend }}
+      frontend_image: ${{ steps.names.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Compute image names (GHCR requires lowercase)
+        id: names
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          echo "backend=ghcr.io/${owner}/helpdesk-backend" >> "$GITHUB_OUTPUT"
+          echo "frontend=ghcr.io/${owner}/helpdesk-frontend" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v4
+
+      # Images are tagged with the commit SHA: every running pod traces back to an exact commit.
+      - name: Build backend image
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ env.APP_DIR }}/backend
+          load: true
+          tags: ${{ steps.names.outputs.backend }}:${{ github.sha }}
+          labels: org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+
+      - name: Build frontend image
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ env.APP_DIR }}/frontend
+          load: true
+          tags: ${{ steps.names.outputs.frontend }}:${{ github.sha }}
+          labels: org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
+
+      # Security gate: fail the pipeline on any fixable HIGH/CRITICAL CVE, before anything is pushed.
+      - name: Trivy scan — backend
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ steps.names.outputs.backend }}:${{ github.sha }}
+          scanners: vuln,secret
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          format: table
+          exit-code: "1"
+
+      - name: Trivy scan — frontend
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ steps.names.outputs.frontend }}:${{ github.sha }}
+          scanners: vuln,secret
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          format: table
+          exit-code: "1"
+          skip-setup-trivy: true
+
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push images
+        if: github.event_name != 'pull_request'
+        run: |
+          docker push "${{ steps.names.outputs.backend }}:${{ github.sha }}"
+          docker push "${{ steps.names.outputs.frontend }}:${{ github.sha }}"
+          {
+            echo "### Published images"
+            echo "- \`${{ steps.names.outputs.backend }}:${{ github.sha }}\`"
+            echo "- \`${{ steps.names.outputs.frontend }}:${{ github.sha }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    name: Deploy to EKS (Helm)
+    needs: build-scan-push
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.AWS_DEPLOY_ROLE_ARN != ''
+    runs-on: ubuntu-latest
+    environment: production
+    permissions: {contents: read, id-token: write}
+    defaults:
+      run:
+        working-directory: session21-python
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Get AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: azure/setup-helm@v5
+
+      - name: Configure kubectl
+        run: aws eks update-kubeconfig --region "$AWS_REGION" --name "${{ vars.EKS_CLUSTER_NAME }}"
+
+      - name: Helm upgrade
+        run: |
+          helm upgrade --install helpdesk ./helm/helpdesk \
+            --namespace "$NAMESPACE" \
+            -f helm/helpdesk/values-prod.yaml \
+            --set backend.image.repository=${{ needs.build-scan-push.outputs.backend_image }} \
+            --set backend.image.tag=${{ github.sha }} \
+            --set frontend.image.repository=${{ needs.build-scan-push.outputs.frontend_image }} \
+            --set frontend.image.tag=${{ github.sha }} \
+            --rollback-on-failure --wait --timeout 10m
+
+      - name: Verify rollout
+        run: |
+          kubectl rollout status deployment/helpdesk-backend -n "$NAMESPACE" --timeout=180s
+          kubectl rollout status deployment/helpdesk-frontend -n "$NAMESPACE" --timeout=180s
+          kubectl get pods,svc,ingress,hpa -n "$NAMESPACE"
+          helm history helpdesk -n "$NAMESPACE" --max 5
