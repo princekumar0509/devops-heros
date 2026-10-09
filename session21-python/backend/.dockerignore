@@ -1,6 +1,9 @@
-__pycache__/
+.venv
+__pycache__
 *.pyc
-.pytest_cache/
-.venv/
-test.db
-.git/
+.pytest_cache
+.ruff_cache
+tests
+.env
+*.db
+requirements-dev.txt

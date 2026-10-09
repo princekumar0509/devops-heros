@@ -1,0 +1,43 @@
+# Rendered at container start by the nginx image's envsubst step.
+# BACKEND_URL points at the API: http://backend:8000 in Compose, the backend Service in Kubernetes.
+server {
+  listen 8080;
+  server_name _;
+  root /usr/share/nginx/html;
+  index index.html;
+
+  server_tokens off;
+  add_header X-Content-Type-Options nosniff always;
+  add_header X-Frame-Options DENY always;
+  add_header Referrer-Policy strict-origin-when-cross-origin always;
+
+  gzip on;
+  gzip_types text/css application/javascript application/json image/svg+xml;
+
+  # Hashed build assets can be cached forever; index.html must not be.
+  location /assets/ {
+    expires 1y;
+    add_header Cache-Control "public, immutable";
+  }
+
+  location / {
+    add_header Cache-Control "no-cache";
+    try_files $uri /index.html;
+  }
+
+  location /api/ {
+    proxy_pass ${BACKEND_URL};
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+
+  # Lightweight probe target for Kubernetes; does not depend on the backend.
+  location = /healthz {
+    access_log off;
+    default_type text/plain;
+    return 200 "ok\n";
+  }
+}
