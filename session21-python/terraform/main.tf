@@ -1,10 +1,6 @@
-data "aws_availability_zones" "available" {
-  state = "available"
-}
-
 locals {
   name = "${var.project}-${var.environment}"
-  azs  = slice(data.aws_availability_zones.available.names, 0, var.az_count)
+  azs  = slice(var.availability_zones, 0, var.az_count)
 
   tags = {
     Project     = var.project
@@ -78,10 +74,12 @@ module "eks" {
     main = {
       instance_types = var.node_instance_types
       ami_type       = "AL2023_x86_64_STANDARD"
-      min_size       = var.node_min_size
-      desired_size   = var.node_desired_size
-      max_size       = var.node_max_size
-      disk_size      = 30
+      # Let EKS choose the current AMI release instead of looking it up in SSM at plan time.
+      use_latest_ami_release_version = false
+      min_size                       = var.node_min_size
+      desired_size                   = var.node_desired_size
+      max_size                       = var.node_max_size
+      disk_size                      = 30
     }
   }
 

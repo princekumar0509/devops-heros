@@ -25,6 +25,7 @@ kubeconfig*
 *.tfvars
 !*.tfvars.example
 *.tfplan
+tfplan
 
 # Editors / OS
 .idea/

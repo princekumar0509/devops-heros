@@ -28,6 +28,12 @@ variable "vpc_cidr" {
   default     = "10.20.0.0/16"
 }
 
+variable "availability_zones" {
+  description = "Availability zones to spread subnets across (must belong to aws_region)."
+  type        = list(string)
+  default     = ["ap-south-1a", "ap-south-1b", "ap-south-1c"]
+}
+
 variable "az_count" {
   description = "Number of availability zones (one public + one private subnet in each)."
   type        = number
