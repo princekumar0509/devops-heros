@@ -1,0 +1,30 @@
+$ pytest -v
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0 -- backend/.venv/bin/python3
+rootdir: backend
+configfile: pytest.ini
+testpaths: tests
+plugins: anyio-4.15.1
+collecting ... collected 19 items
+
+tests/test_system.py::test_root_reports_service_name PASSED              [  5%]
+tests/test_system.py::test_health_is_up PASSED                           [ 10%]
+tests/test_system.py::test_ready_checks_database PASSED                  [ 15%]
+tests/test_system.py::test_metrics_exposes_prometheus_format PASSED      [ 21%]
+tests/test_tickets.py::test_create_ticket_defaults_to_open PASSED        [ 26%]
+tests/test_tickets.py::test_create_ticket_rejects_invalid_payload PASSED [ 31%]
+tests/test_tickets.py::test_list_tickets_newest_first PASSED             [ 36%]
+tests/test_tickets.py::test_list_tickets_filters_and_search PASSED       [ 42%]
+tests/test_tickets.py::test_get_ticket_by_id PASSED                      [ 47%]
+tests/test_tickets.py::test_get_missing_ticket_returns_404 PASSED        [ 52%]
+tests/test_tickets.py::test_update_ticket_assigns_agent_and_resolves PASSED [ 57%]
+tests/test_tickets.py::test_reopening_ticket_clears_resolved_at PASSED   [ 63%]
+tests/test_tickets.py::test_update_missing_ticket_returns_404 PASSED     [ 68%]
+tests/test_tickets.py::test_delete_ticket PASSED                         [ 73%]
+tests/test_tickets.py::test_stats_counts_by_status_and_category PASSED   [ 78%]
+tests/test_tickets.py::test_comments_round_trip PASSED                   [ 84%]
+tests/test_tickets.py::test_agent_reply_moves_ticket_in_progress PASSED  [ 89%]
+tests/test_tickets.py::test_internal_note_does_not_change_status PASSED  [ 94%]
+tests/test_tickets.py::test_deleting_ticket_removes_comments PASSED      [100%]
+
+============================== 19 passed in 0.36s ==============================

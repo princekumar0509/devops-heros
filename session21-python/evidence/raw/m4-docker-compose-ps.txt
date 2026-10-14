@@ -1,0 +1,9 @@
+$ docker compose ps
+SERVICE    IMAGE                     STATUS                    PORTS
+backend    helpdesk-backend:local    Up 36 seconds (healthy)   0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp
+frontend   helpdesk-frontend:local   Up 31 seconds (healthy)   0.0.0.0:3000->8080/tcp, [::]:3000->8080/tcp
+postgres   postgres:16-alpine        Up 42 seconds (healthy)   127.0.0.1:5433->5432/tcp
+
+$ docker compose exec backend id; docker compose exec frontend id
+uid=10001(appuser) gid=10001(appuser) groups=10001(appuser)
+uid=101(nginx) gid=101(nginx) groups=101(nginx)

@@ -277,6 +277,8 @@ cd terraform && terraform destroy
 
 ## Grading evidence checklist (see GRADING.md)
 
+The screenshots for every module are in [`evidence/`](evidence/README.md), with an index of what each one shows.
+
 | Module | Where it is | Screenshot to capture |
 |---|---|---|
 | M1 App | `backend/app`, `backend/alembic/versions`, `frontend/`, `docker-compose.yml` | UI in browser |

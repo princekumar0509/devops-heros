@@ -1,0 +1,4 @@
+$ curl -s -H "Host: helpdesk.local" http://localhost:8089/api/tickets/stats   # via Ingress → backend
+{"total":5,"open":3,"inProgress":1,"resolved":1,"closed":0,"urgentOpen":1,"unassigned":3,"byCategory":{"BUG":1,"FEATURE_REQUEST":1,"BILLING":1,"ACCOUNT":1,"GENERAL":1}}
+$ curl -s -o /dev/null -w "%{http_code}\n" -H "Host: helpdesk.local" http://localhost:8089/   # via Ingress → frontend
+200

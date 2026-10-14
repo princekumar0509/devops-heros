@@ -1,0 +1,13 @@
+$ helm list -n helpdesk
+NAME    	NAMESPACE	REVISION	UPDATED                                	STATUS  	CHART         	APP VERSION
+helpdesk	helpdesk 	2       	2026-10-14 19:00:38.992871542 +0530 IST	deployed	helpdesk-1.0.0	1.0.0      
+
+$ helm history helpdesk -n helpdesk
+REVISION	UPDATED                 	STATUS    	CHART         	APP VERSION	DESCRIPTION     
+1       	Wed Oct 14 18:53:41 2026	superseded	helpdesk-1.0.0	1.0.0      	Install complete
+2       	Wed Oct 14 19:00:38 2026	deployed  	helpdesk-1.0.0	1.0.0      	Upgrade complete
+
+$ kubectl get deploy -n helpdesk -o wide   # image tag = git commit SHA
+NAME                READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS   IMAGES                                                                               SELECTOR
+helpdesk-backend    6/6     6            6           8m39s   backend      ghcr.io/princekumar0509/helpdesk-backend:d38b280648a9fd56684679aa2efd967f31b70319    app.kubernetes.io/component=backend,app.kubernetes.io/instance=helpdesk,app.kubernetes.io/name=helpdesk
+helpdesk-frontend   2/2     2            2           8m39s   frontend     ghcr.io/princekumar0509/helpdesk-frontend:d38b280648a9fd56684679aa2efd967f31b70319   app.kubernetes.io/component=frontend,app.kubernetes.io/instance=helpdesk,app.kubernetes.io/name=helpdesk

@@ -1,0 +1,19 @@
+$ kubectl apply -f k8s/namespace.yaml
+namespace/helpdesk created
+$ helm upgrade --install helpdesk ./helm/helpdesk -n helpdesk -f helm/helpdesk/values-prod.yaml --set ingress.host=helpdesk.local --set backend.image.repository=ghcr.io/princekumar0509/helpdesk-backend --set backend.image.tag=d38b280648a9… --set frontend.image.repository=ghcr.io/princekumar0509/helpdesk-frontend --set frontend.image.tag=d38b280648a9… --rollback-on-failure --wait
+Release "helpdesk" does not exist. Installing it now.
+NAME: helpdesk
+LAST DEPLOYED: Wed Oct 14 18:53:41 2026
+NAMESPACE: helpdesk
+STATUS: deployed
+REVISION: 1
+DESCRIPTION: Install complete
+TEST SUITE: None
+NOTES:
+HelpDesk 1.0.0 deployed as release "helpdesk" in namespace "helpdesk".
+
+  kubectl get pods,svc,ingress,hpa -n helpdesk
+
+Ingress:
+  kubectl get ingress helpdesk -n helpdesk
+  Open http://helpdesk.local  (map it to the ingress address in /etc/hosts for local clusters)

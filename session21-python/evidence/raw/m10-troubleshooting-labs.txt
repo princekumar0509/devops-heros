@@ -1,0 +1,34 @@
+# LAB 1 — ImagePullBackOff
+$ kubectl get pods -n helpdesk -l app=helpdesk-broken-image
+NAME                                    READY   STATUS         RESTARTS   AGE
+helpdesk-broken-image-7d8dc4b65-49xhn   0/1     ErrImagePull   0          40s
+$ kubectl describe pod -n helpdesk -l app=helpdesk-broken-image | grep -A8 Events
+Events:
+  Type     Reason     Age                From               Message
+  ----     ------     ----               ----               -------
+  Normal   Scheduled  41s                default-scheduler  Successfully assigned helpdesk/helpdesk-broken-image-7d8dc4b65-49xhn to helpdesk-control-plane
+  Normal   Pulling    24s (x2 over 40s)  kubelet            spec.containers{web}: Pulling image "nginxinc/nginx-unprivileged:1.31-alpine-does-not-exist"
+  Warning  Failed     22s (x2 over 38s)  kubelet            spec.containers{web}: Failed to pull image "nginxinc/nginx-unprivileged:1.31-alpine-does-not-exist": rpc error
+  Warning  Failed     22s (x2 over 38s)  kubelet            spec.containers{web}: Error: ErrImagePull
+  Normal   BackOff    9s (x2 over 37s)   kubelet            spec.containers{web}: Back-off pulling image "nginxinc/nginx-unprivileged:1.31-alpine-does-not-exist"
+  Warning  Failed     9s (x2 over 37s)   kubelet            spec.containers{web}: Error: ImagePullBackOff
+$ kubectl set image deployment/helpdesk-broken-image web=nginxinc/nginx-unprivileged:1.31-alpine -n helpdesk
+deployment.apps/helpdesk-broken-image image updated
+deployment "helpdesk-broken-image" successfully rolled out
+NAME                                    READY   STATUS        RESTARTS   AGE
+helpdesk-broken-image-7d8dc4b65-49xhn   0/1     Terminating   0          55s
+helpdesk-broken-image-cdf6f64c-sl4zs    1/1     Running       0          14s
+
+# LAB 2 — Service without endpoints
+$ kubectl get endpointslices -n helpdesk -l kubernetes.io/service-name=helpdesk-broken-service
+NAME                            ADDRESSTYPE   PORTS     ENDPOINTS   AGE
+helpdesk-broken-service-dh6nf   IPv4          <unset>   <unset>     55s
+$ kubectl get svc helpdesk-broken-service -n helpdesk -o jsonpath={.spec.selector}
+{"app":"helpdesk-api"}
+$ kubectl get pods -n helpdesk -l app.kubernetes.io/component=backend --show-labels | head -2
+NAME                                READY   STATUS    RESTARTS   AGE     LABELS
+helpdesk-backend-7559f944b4-fxp4r   1/1     Running   0          7m4s    app.kubernetes.io/component=backend,app.kubernetes.io/instance=helpdesk,app.kubernetes.io/managed-by=Helm,app.kubernetes.io/nam
+$ kubectl patch svc helpdesk-broken-service -n helpdesk --type=merge -p '{"spec":{"selector":{"app.kubernetes.io/component":"backend","app":null},"ports":[{"port":8000,"targetPort":8000}]}}'
+service/helpdesk-broken-service patched
+NAME                            ADDRESSTYPE   PORTS   ENDPOINTS                                         AGE
+helpdesk-broken-service-dh6nf   IPv4          8000    10.244.0.25,10.244.0.20,10.244.0.23 + 3 more...   60s

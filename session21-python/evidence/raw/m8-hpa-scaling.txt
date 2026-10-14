@@ -1,0 +1,35 @@
+$ URL=http://helpdesk.local CONCURRENCY=40 REQUESTS=60000 ./scripts/load-test.sh &
+$ kubectl get hpa -n helpdesk -w
+NAME               REFERENCE                     TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+helpdesk-backend   Deployment/helpdesk-backend   cpu: 6%/60%   2         6         2          2m7s
+helpdesk-backend   Deployment/helpdesk-backend   cpu: 92%/60%   2     6     2     2m22s
+helpdesk-backend   Deployment/helpdesk-backend   cpu: 252%/60%   2     6     4     2m37s
+helpdesk-backend   Deployment/helpdesk-backend   cpu: 488%/60%   2     6     6     2m52s
+helpdesk-backend   Deployment/helpdesk-backend   cpu: 352%/60%   2     6     6     3m7s
+helpdesk-backend   Deployment/helpdesk-backend   cpu: 224%/60%   2     6     6     3m22s
+helpdesk-backend   Deployment/helpdesk-backend   cpu: 222%/60%   2     6     6     3m38s
+helpdesk-backend   Deployment/helpdesk-backend   cpu: 220%/60%   2     6     6     3m53s
+helpdesk-backend   Deployment/helpdesk-backend   cpu: 236%/60%   2     6     6     4m8s
+helpdesk-backend   Deployment/helpdesk-backend   cpu: 233%/60%   2     6     6     4m23s
+helpdesk-backend   Deployment/helpdesk-backend   cpu: 224%/60%   2     6     6     4m38s
+
+$ kubectl get pods -n helpdesk -l app.kubernetes.io/component=backend
+NAME                                READY   STATUS    RESTARTS   AGE
+helpdesk-backend-7559f944b4-fxp4r   1/1     Running   0          2m8s
+helpdesk-backend-7559f944b4-fz8n9   1/1     Running   0          2m23s
+helpdesk-backend-7559f944b4-lshfp   1/1     Running   0          2m23s
+helpdesk-backend-7559f944b4-nk8wq   1/1     Running   0          4m38s
+helpdesk-backend-7559f944b4-r48s4   1/1     Running   0          2m8s
+helpdesk-backend-7559f944b4-vshr6   1/1     Running   0          4m38s
+
+$ kubectl top pods -n helpdesk
+NAME                                CPU(cores)   MEMORY(bytes)   
+helpdesk-backend-7559f944b4-fxp4r   228m         68Mi            
+helpdesk-backend-7559f944b4-fz8n9   219m         69Mi            
+helpdesk-backend-7559f944b4-lshfp   226m         68Mi            
+helpdesk-backend-7559f944b4-nk8wq   225m         70Mi            
+helpdesk-backend-7559f944b4-r48s4   228m         69Mi            
+helpdesk-backend-7559f944b4-vshr6   221m         71Mi            
+helpdesk-frontend-c66b46458-7nhxp   1m           13Mi            
+helpdesk-frontend-c66b46458-8bdd5   1m           13Mi            
+helpdesk-postgres-0                 500m         138Mi           

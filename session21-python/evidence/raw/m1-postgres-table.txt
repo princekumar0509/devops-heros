@@ -1,0 +1,10 @@
+$ docker compose exec postgres psql -U helpdesk -d helpdesk -c "select id, subject, status, priority, agent from tickets order by id"
+ id |              subject               |   status    | priority |   agent    
+----+------------------------------------+-------------+----------+------------
+  1 | Checkout page returns HTTP 500     | IN_PROGRESS | URGENT   | Ravi Kumar
+  2 | Charged twice for October invoice  | OPEN        | HIGH     | 
+  3 | Password reset email never arrives | RESOLVED    | MEDIUM   | Neha Shah
+  4 | Please add dark mode               | OPEN        | LOW      | 
+  5 | How do I export my data?           | OPEN        | LOW      | 
+(5 rows)
+

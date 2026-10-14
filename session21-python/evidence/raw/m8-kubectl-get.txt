@@ -1,0 +1,25 @@
+$ kubectl get pods -n helpdesk -o wide
+NAME                                READY   STATUS    RESTARTS   AGE    IP            NODE                     NOMINATED NODE   READINESS GATES
+helpdesk-backend-7559f944b4-nk8wq   1/1     Running   0          109s   10.244.0.20   helpdesk-control-plane   <none>           <none>
+helpdesk-backend-7559f944b4-vshr6   1/1     Running   0          109s   10.244.0.17   helpdesk-control-plane   <none>           <none>
+helpdesk-frontend-c66b46458-7nhxp   1/1     Running   0          109s   10.244.0.19   helpdesk-control-plane   <none>           <none>
+helpdesk-frontend-c66b46458-8bdd5   1/1     Running   0          109s   10.244.0.18   helpdesk-control-plane   <none>           <none>
+helpdesk-postgres-0                 1/1     Running   0          109s   10.244.0.22   helpdesk-control-plane   <none>           <none>
+
+$ kubectl get svc -n helpdesk
+NAME                TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+helpdesk-backend    ClusterIP   10.96.255.89    <none>        8000/TCP   109s
+helpdesk-frontend   ClusterIP   10.96.206.202   <none>        80/TCP     109s
+helpdesk-postgres   ClusterIP   10.96.236.219   <none>        5432/TCP   109s
+
+$ kubectl get ingress -n helpdesk
+NAME       CLASS   HOSTS            ADDRESS     PORTS   AGE
+helpdesk   nginx   helpdesk.local   localhost   80      109s
+
+$ kubectl get hpa -n helpdesk
+NAME               REFERENCE                     TARGETS              MINPODS   MAXPODS   REPLICAS   AGE
+helpdesk-backend   Deployment/helpdesk-backend   cpu: <unknown>/60%   2         6         2          109s
+
+$ kubectl get pvc -n helpdesk
+NAME                       STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+data-helpdesk-postgres-0   Bound    pvc-3fcf5fd2-5be8-4e26-b421-9e9563dee37e   5Gi        RWO            standard       <unset>                 109s
