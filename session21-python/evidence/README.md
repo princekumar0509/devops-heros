@@ -1,6 +1,6 @@
 # Grading evidence — HelpDesk capstone
 
-All screenshots were captured on 2026-10-14. Terminal images are renderings of the real command output. The exact text of each is in [`raw/`](raw/).
+All screenshots were captured on 2026-10-14, except `m3-commit-history.png`, which was re-captured on 2026-10-15 after the history was rewritten. Terminal images are renderings of the real command output. The exact text of each is in [`raw/`](raw/).
 
 | Module | Evidence | What it shows |
 |---|---|---|
