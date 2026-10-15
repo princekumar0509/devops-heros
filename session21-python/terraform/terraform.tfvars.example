@@ -11,5 +11,8 @@ node_desired_size   = 2
 
 # Enables keyless GitHub Actions deploys (OIDC). Set to "" to skip.
 github_repository = "princekumar0509/devops-heros"
+# If `gh api repos/OWNER/REPO/actions/oidc/customization/sub` shows "use_immutable_subject": true,
+# copy its sub_claim_prefix here, otherwise CI gets "Not authorized to perform sts:AssumeRoleWithWebIdentity".
+github_oidc_sub_prefix = ""
 # Set to false if `aws iam list-open-id-connect-providers` already shows token.actions.githubusercontent.com
 create_github_oidc_provider = true

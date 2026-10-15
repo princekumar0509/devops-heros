@@ -38,11 +38,15 @@ data "aws_iam_policy_document" "github_trust" {
     }
     # Only the deploy job of this one repository may assume the role. That job uses
     # `environment: production`, so GitHub sets sub to the environment, not the branch;
-    # the job itself only runs on main.
+    # the job itself only runs on main. Repos on GitHub's immutable subject format put
+    # owner/repo IDs in the prefix instead, so accept that form too when configured.
     condition {
       test     = "StringEquals"
       variable = "${local.github_oidc_url}:sub"
-      values   = ["repo:${var.github_repository}:environment:production"]
+      values = compact([
+        "repo:${var.github_repository}:environment:production",
+        var.github_oidc_sub_prefix != "" ? "${var.github_oidc_sub_prefix}:environment:production" : "",
+      ])
     }
   }
 }
