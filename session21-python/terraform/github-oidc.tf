@@ -36,11 +36,13 @@ data "aws_iam_policy_document" "github_trust" {
       variable = "${local.github_oidc_url}:aud"
       values   = ["sts.amazonaws.com"]
     }
-    # Only workflow runs on the main branch of this one repository may assume the role.
+    # Only the deploy job of this one repository may assume the role. That job uses
+    # `environment: production`, so GitHub sets sub to the environment, not the branch;
+    # the job itself only runs on main.
     condition {
       test     = "StringEquals"
       variable = "${local.github_oidc_url}:sub"
-      values   = ["repo:${var.github_repository}:ref:refs/heads/main"]
+      values   = ["repo:${var.github_repository}:environment:production"]
     }
   }
 }

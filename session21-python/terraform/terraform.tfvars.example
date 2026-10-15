@@ -5,7 +5,8 @@ aws_region          = "ap-south-1"
 project             = "helpdesk"
 environment         = "dev"
 cluster_version     = "1.34"
-node_instance_types = ["t3.medium"]
+# AWS Free plan accounts can only launch free-tier types (t3.medium is rejected); m7i-flex.large = 2 vCPU / 8 GiB.
+node_instance_types = ["m7i-flex.large"]
 node_desired_size   = 2
 
 # Enables keyless GitHub Actions deploys (OIDC). Set to "" to skip.

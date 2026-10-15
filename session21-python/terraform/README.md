@@ -8,7 +8,7 @@ AWS (ap-south-1)
     ├── public subnets  10.20.0.0/24, 10.20.1.0/24   (internet gateway; tagged for internet-facing load balancers)
     ├── private subnets 10.20.10.0/24, 10.20.11.0/24 (worker nodes; egress via a single NAT gateway)
     └── EKS cluster helpdesk-dev-eks
-        ├── managed node group "main": 2× t3.medium (min 2 / max 4), AL2023
+        ├── managed node group "main": 2× m7i-flex.large (min 2 / max 4), AL2023
         ├── add-ons: vpc-cni, coredns, kube-proxy, eks-pod-identity-agent,
         │            metrics-server (HPA), aws-ebs-csi-driver (Postgres volume, via Pod Identity)
         └── access entry for the GitHub Actions deploy role (namespace "helpdesk" only)
@@ -61,4 +61,4 @@ kubectl delete pvc --all -n helpdesk
 terraform destroy                                # screenshot for M7
 ```
 
-> **Cost warning:** the EKS control plane, NAT gateway, two t3.medium nodes and the load balancer are billed hourly. Destroy everything when you are done.
+> **Cost warning:** the EKS control plane, NAT gateway, two m7i-flex.large nodes and the load balancer are billed hourly. Destroy everything when you are done.

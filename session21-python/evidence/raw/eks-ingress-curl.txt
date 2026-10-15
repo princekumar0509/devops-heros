@@ -1,0 +1,2 @@
+$ curl http://localhost:8090/api/tickets/stats   # kubectl port-forward to ingress-nginx (ELB blocked on new account)
+{"total":5,"open":3,"inProgress":1,"resolved":1,"closed":0,"urgentOpen":1,"unassigned":3,"byCategory":{"BUG":1,"FEATURE_REQUEST":1,"BILLING":1,"ACCOUNT":1,"GENERAL":1}}

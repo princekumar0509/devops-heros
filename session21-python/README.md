@@ -174,7 +174,7 @@ terraform init && terraform plan && terraform apply          # ~15–20 min
 $(terraform output -raw configure_kubectl)                    # point kubectl at the cluster
 ```
 
-This creates a VPC in `ap-south-1` with 2 public and 2 private subnets across 2 AZs and one NAT gateway. It also creates an EKS cluster with a managed node group (2× t3.medium), the EBS CSI driver (for the Postgres volume), metrics-server (for the HPA), and the GitHub OIDC deploy role.
+This creates a VPC in `ap-south-1` with 2 public and 2 private subnets across 2 AZs and one NAT gateway. It also creates an EKS cluster with a managed node group (2× m7i-flex.large), the EBS CSI driver (for the Postgres volume), metrics-server (for the HPA), and the GitHub OIDC deploy role.
 
 > **Cost:** EKS control plane, NAT gateway, 2 EC2 nodes and a load balancer cost several USD per day. Run `terraform destroy` after grading (uninstall the Helm releases first so the load balancer is removed, see below).
 
@@ -184,6 +184,9 @@ One-time cluster bootstrap (after `terraform apply`):
 
 ```bash
 kubectl apply -f k8s/namespace.yaml
+
+# EKS ≥ 1.30 ships gp2 without the default flag; the Postgres PVC needs a default StorageClass
+kubectl annotate storageclass gp2 storageclass.kubernetes.io/is-default-class=true --overwrite
 
 # Ingress controller → creates an AWS load balancer
 helm upgrade --install ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx \

@@ -1,0 +1,5 @@
+$ helm list -A
+NAME                 	NAMESPACE    	REVISION	UPDATED                                	STATUS  	CHART                       	APP VERSION
+helpdesk             	helpdesk     	1       	2026-10-15 20:53:02.698577801 +0530 IST	deployed	helpdesk-1.0.0              	1.0.0      
+ingress-nginx        	ingress-nginx	1       	2026-10-15 20:44:45.051388888 +0530 IST	deployed	ingress-nginx-4.15.1        	1.15.1     
+kube-prometheus-stack	monitoring   	1       	2026-10-15 20:45:44.981909382 +0530 IST	deployed	kube-prometheus-stack-92.8.0	v0.94.1    
