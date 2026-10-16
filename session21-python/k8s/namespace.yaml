@@ -1,4 +1,5 @@
-# Created once before the first Helm install (the CI deploy role is scoped to this namespace only).
+# Created once before the first Helm install (the CI deploy role is scoped to this namespace only),
+# together with the RBAC that lets that role manage the chart's ServiceMonitor.
 #   kubectl apply -f k8s/namespace.yaml
 apiVersion: v1
 kind: Namespace
@@ -9,3 +10,29 @@ metadata:
     # Warn (don't block) when a pod would violate the "restricted" Pod Security Standard.
     pod-security.kubernetes.io/warn: restricted
     pod-security.kubernetes.io/audit: restricted
+---
+# The CI deploy role gets EKS's namespace-scoped admin policy, which does not cover CRDs.
+# Terraform maps that role to the "helpdesk-deployers" group; this lets it manage the chart's ServiceMonitor.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: helpdesk-deployer-monitoring
+  namespace: helpdesk
+rules:
+  - apiGroups: [monitoring.coreos.com]
+    resources: [servicemonitors]
+    verbs: [get, list, watch, create, update, patch, delete]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: helpdesk-deployer-monitoring
+  namespace: helpdesk
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: helpdesk-deployer-monitoring
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: Group
+    name: helpdesk-deployers

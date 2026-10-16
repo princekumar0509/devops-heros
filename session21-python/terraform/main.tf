@@ -86,6 +86,9 @@ module "eks" {
   access_entries = local.github_deploy_enabled ? {
     github_actions = {
       principal_arn = aws_iam_role.github_deploy[0].arn
+      # The EKS admin policy has no rights on CRDs, so the ServiceMonitor is granted
+      # to this group by the Role in k8s/namespace.yaml.
+      kubernetes_groups = ["helpdesk-deployers"]
       policy_associations = {
         # Scoped to the app namespace only: CI can deploy HelpDesk but cannot touch the rest of the cluster.
         helpdesk = {
