@@ -3,9 +3,11 @@
 **Total length:** about 12 minutes, in 12 parts.
 
 **How to record your voice:**
-- Record **one audio file per part**, named `part01.m4a`, `part02.m4a`, and so on. Phone voice-memo files (`.m4a`, `.mp3`, `.wav`) all work.
+- Record **one audio file per part**, named `part01.m4a`, `part02.m4a` … `part12.m4a`. Phone voice-memo files (`.m4a`, `.mp3`, `.wav`) all work.
+- Put the 12 files in `session21-python/presentation/audio/`. That folder is git-ignored, so your voice files are not pushed to GitHub.
 - Speak at a calm pace. If you stumble, stop and record that part again. Don't try to fix it mid-sentence.
 - You don't need to match the timing exactly. The video for each part is stretched or trimmed to fit your audio.
+- To combine them with the screen recordings, run `python make_video.py --audio audio/` in this folder. It writes `recording/HelpDesk-Presentation.mp4`.
 - Everything in **"Say"** is what you read aloud. **"On screen"** describes what the video shows at that moment, so you know what you're talking about.
 
 ---
