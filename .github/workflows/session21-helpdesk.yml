@@ -166,7 +166,11 @@ jobs:
           role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
+      # Pinned: with "latest", a failed release lookup silently falls back to Helm 3,
+      # which does not know --rollback-on-failure (Helm 4) and fails the deploy.
       - uses: azure/setup-helm@v5
+        with:
+          version: v4.3.1
 
       - name: Configure kubectl
         run: aws eks update-kubeconfig --region "$AWS_REGION" --name "${{ vars.EKS_CLUSTER_NAME }}"
