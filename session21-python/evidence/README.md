@@ -1,6 +1,6 @@
 # Grading evidence — HelpDesk capstone
 
-All screenshots were captured on 2026-10-14, except `m3-commit-history.png`, which was re-captured on 2026-10-15 after the history was rewritten. Terminal images are renderings of the real command output. The exact text of each is in [`raw/`](raw/).
+Screenshots were captured on 2026-10-14. `m3-commit-history.png` was re-captured on 2026-10-15 after the history was rewritten, and the `eks-*` files were captured on 2026-10-16 from the live AWS deployment. Terminal images are renderings of the real command output. The exact text of each is in [`raw/`](raw/).
 
 | Module | Evidence | What it shows |
 |---|---|---|
@@ -23,8 +23,24 @@ All screenshots were captured on 2026-10-14, except `m3-commit-history.png`, whi
 | | [m9-grafana-dashboard.png](m9-grafana-dashboard.png) | Auto-provisioned "HelpDesk API" Grafana dashboard with live request rate, error ratio, latency and per-pod CPU |
 | **M10** Demo | [m10-troubleshooting-labs.png](m10-troubleshooting-labs.png) | Troubleshooting labs: ImagePullBackOff and a Service with no endpoints, diagnosed and fixed |
 
-## Where M8/M9 ran, and what is still pending
+## Live deployment on AWS EKS (2026-10-16)
 
-The Kubernetes, Helm, Ingress, HPA and monitoring evidence comes from a **kind** cluster (Kubernetes 1.37) on the development laptop. It runs the same Helm chart, `values-prod.yaml` and **exact GHCR images built by CI**. EKS couldn't be used yet: the new AWS account is still waiting for AWS activation, and EC2/EKS API calls return `OptInRequired` / `SubscriptionRequiredException`.
+The same chart now runs on **AWS EKS** in account 284874841362, `ap-south-1`. It was provisioned by `terraform apply` and deployed by the CI pipeline itself through GitHub OIDC. These screenshots were captured from the live pages on 2026-10-16.
 
-**Still pending, until AWS activates the account:** `terraform apply` (the AWS console screenshot of the VPC and EKS), the CI deploy job to EKS, and `terraform destroy`. The steps are in [../README.md](../README.md) §6–§7 and [../terraform/README.md](../terraform/README.md).
+| Module | Evidence | What it shows |
+|---|---|---|
+| **M5** CI/CD | [eks-pipeline-green.png](eks-pipeline-green.png) | [Run #7](https://github.com/princekumar0509/devops-heros/actions/runs/38929115705) on commit `5acff46`: test → build + Trivy + push → **Deploy to EKS (Helm)**, all green |
+| | [eks-ghcr-helpdesk-backend.png](eks-ghcr-helpdesk-backend.png), [eks-ghcr-helpdesk-frontend.png](eks-ghcr-helpdesk-frontend.png) | GHCR packages; each version is tagged with its full commit SHA |
+| **M7** Terraform | [eks-aws-console-cluster.png](eks-aws-console-cluster.png) | AWS Console: EKS cluster `helpdesk-dev-eks`, status **Active**, Kubernetes 1.34 |
+| | [eks-aws-console-nodegroup.png](eks-aws-console-nodegroup.png), [eks-aws-console-ec2-nodes.png](eks-aws-console-ec2-nodes.png) | Managed node group **Active** (desired size 2); both EC2 nodes running as `m7i-flex.large` across 2 AZs |
+| | [eks-aws-console-vpc.png](eks-aws-console-vpc.png), [eks-aws-console-subnets.png](eks-aws-console-subnets.png) | VPC `helpdesk-dev-vpc` (10.20.0.0/16): **2 public and 2 private subnets** in ap-south-1a/1b, with their route tables |
+| **M8** Kubernetes + Helm | [eks-app-via-ingress.png](eks-app-via-ingress.png) | App served from the public AWS NLB through ingress-nginx: `/` → frontend, `/api` → backend |
+| | [raw/eks-kubectl-get.txt](raw/eks-kubectl-get.txt), [raw/eks-helm-list.txt](raw/eks-helm-list.txt), [raw/eks-aws-cluster-vpc.txt](raw/eks-aws-cluster-vpc.txt) | Nodes, pods, Services, Ingress, HPA and PVC on EKS; `helm list`; cluster and subnet details from the AWS CLI |
+| **M9** Observability | [eks-prometheus-targets.png](eks-prometheus-targets.png) | Prometheus on EKS: `serviceMonitor/helpdesk/helpdesk-backend` **2/2 UP** |
+| | [eks-grafana-dashboard.png](eks-grafana-dashboard.png) | "HelpDesk API" dashboard on EKS with live traffic: 2.2 req/s, 0% 5xx, p95 95 ms, 2 backend pods |
+
+The console screenshots were taken through a one-hour, read-only federated sign-in. That is why a few widgets that need extra permissions show "Access denied" or "Data unavailable".
+
+The `m8-*` and `m9-*` files above are the earlier run on a local **kind** cluster, made while the AWS account was waiting for activation. They use the same chart and the same CI-built images.
+
+**Still to do after grading:** `terraform destroy` and its screenshot. See [../README.md](../README.md) §6.

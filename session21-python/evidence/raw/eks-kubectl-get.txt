@@ -1,26 +1,31 @@
 $ kubectl get nodes -o wide
 NAME                                          STATUS   ROLES    AGE   VERSION                INTERNAL-IP    EXTERNAL-IP   OS-IMAGE                        KERNEL-VERSION                     CONTAINER-RUNTIME
-ip-10-20-10-156.ap-south-1.compute.internal   Ready    <none>   12m   v1.34.11-eks-b9510e3   10.20.10.156   <none>        Amazon Linux 2023.12.20261012   6.12.111-136.204.amzn2023.x86_64   containerd://2.3.5+unknown
-ip-10-20-11-57.ap-south-1.compute.internal    Ready    <none>   12m   v1.34.11-eks-b9510e3   10.20.11.57    <none>        Amazon Linux 2023.12.20261012   6.12.111-136.204.amzn2023.x86_64   containerd://2.3.5+unknown
+ip-10-20-10-156.ap-south-1.compute.internal   Ready    <none>   25h   v1.34.11-eks-b9510e3   10.20.10.156   <none>        Amazon Linux 2023.12.20261012   6.12.111-136.204.amzn2023.x86_64   containerd://2.3.5+unknown
+ip-10-20-11-57.ap-south-1.compute.internal    Ready    <none>   25h   v1.34.11-eks-b9510e3   10.20.11.57    <none>        Amazon Linux 2023.12.20261012   6.12.111-136.204.amzn2023.x86_64   containerd://2.3.5+unknown
 
 $ kubectl get pods,svc,ingress,hpa,pvc -n helpdesk
 NAME                                     READY   STATUS    RESTARTS   AGE
-pod/helpdesk-backend-6c56f57748-gnchs    1/1     Running   0          2m41s
-pod/helpdesk-backend-6c56f57748-w89zs    1/1     Running   0          2m56s
-pod/helpdesk-frontend-65bb5d67df-bv9bh   1/1     Running   0          2m56s
-pod/helpdesk-frontend-65bb5d67df-nrdkt   1/1     Running   0          2m56s
-pod/helpdesk-postgres-0                  1/1     Running   0          2m56s
+pod/helpdesk-backend-fb7498945-kzwqk     1/1     Running   0          22m
+pod/helpdesk-backend-fb7498945-q2g8q     1/1     Running   0          22m
+pod/helpdesk-frontend-5f94d5b8b8-frblr   1/1     Running   0          22m
+pod/helpdesk-frontend-5f94d5b8b8-lhljz   1/1     Running   0          22m
+pod/helpdesk-postgres-0                  1/1     Running   0          25h
 
 NAME                        TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
-service/helpdesk-backend    ClusterIP   172.20.83.89     <none>        8000/TCP   2m57s
-service/helpdesk-frontend   ClusterIP   172.20.112.128   <none>        80/TCP     2m57s
-service/helpdesk-postgres   ClusterIP   172.20.127.140   <none>        5432/TCP   2m57s
+service/helpdesk-backend    ClusterIP   172.20.83.89     <none>        8000/TCP   25h
+service/helpdesk-frontend   ClusterIP   172.20.112.128   <none>        80/TCP     25h
+service/helpdesk-postgres   ClusterIP   172.20.127.140   <none>        5432/TCP   25h
 
-NAME                                 CLASS   HOSTS   ADDRESS   PORTS   AGE
-ingress.networking.k8s.io/helpdesk   nginx   *                 80      2m56s
+NAME                                 CLASS   HOSTS   ADDRESS                                                                          PORTS   AGE
+ingress.networking.k8s.io/helpdesk   nginx   *       afcb17c24beb84483a454772e84c72e0-39825dd2c98a88f7.elb.ap-south-1.amazonaws.com   80      25h
 
 NAME                                                   REFERENCE                     TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
-horizontalpodautoscaler.autoscaling/helpdesk-backend   Deployment/helpdesk-backend   cpu: 2%/60%   2         6         2          2m56s
+horizontalpodautoscaler.autoscaling/helpdesk-backend   Deployment/helpdesk-backend   cpu: 3%/60%   2         6         2          25h
 
 NAME                                             STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
-persistentvolumeclaim/data-helpdesk-postgres-0   Bound    pvc-dfe3feaa-772e-44c2-824f-2b4b65021d34   5Gi        RWO            gp2            <unset>                 2m56s
+persistentvolumeclaim/data-helpdesk-postgres-0   Bound    pvc-dfe3feaa-772e-44c2-824f-2b4b65021d34   5Gi        RWO            gp2            <unset>                 25h
+
+$ kubectl get deploy -n helpdesk -o wide
+NAME                READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES                                                                               SELECTOR
+helpdesk-backend    2/2     2            2           25h   backend      ghcr.io/princekumar0509/helpdesk-backend:5acff467e9c73b4dcdbc0495711ca7d38ac3a3e7    app.kubernetes.io/component=backend,app.kubernetes.io/instance=helpdesk,app.kubernetes.io/name=helpdesk
+helpdesk-frontend   2/2     2            2           25h   frontend     ghcr.io/princekumar0509/helpdesk-frontend:5acff467e9c73b4dcdbc0495711ca7d38ac3a3e7   app.kubernetes.io/component=frontend,app.kubernetes.io/instance=helpdesk,app.kubernetes.io/name=helpdesk

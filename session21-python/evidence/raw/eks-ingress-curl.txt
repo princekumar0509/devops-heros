@@ -1,2 +1,4 @@
-$ curl http://localhost:8090/api/tickets/stats   # kubectl port-forward to ingress-nginx (ELB blocked on new account)
+$ curl -s -o /dev/null -w '%{http_code}' http://afcb17c24beb84483a454772e84c72e0-39825dd2c98a88f7.elb.ap-south-1.amazonaws.com/
+200
+$ curl -s http://afcb17c24beb84483a454772e84c72e0-39825dd2c98a88f7.elb.ap-south-1.amazonaws.com/api/tickets/stats
 {"total":5,"open":3,"inProgress":1,"resolved":1,"closed":0,"urgentOpen":1,"unassigned":3,"byCategory":{"BUG":1,"FEATURE_REQUEST":1,"BILLING":1,"ACCOUNT":1,"GENERAL":1}}
