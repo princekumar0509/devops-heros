@@ -26,7 +26,7 @@ export default function Sidebar({ view, onSelect, stats, open, onClose }) {
           </span>
           <div>
             <b>HelpDesk</b>
-            <small>Customer support</small>
+            <small>Customer support · v2 live demo</small>
           </div>
         </div>
 
